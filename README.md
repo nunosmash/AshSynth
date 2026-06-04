@@ -90,9 +90,9 @@ dust/code/ash/
   lib/Engine_Ash.sc
 ```
 
-Run **ash** from norns **SELECT**. The same control summary lives in the comment block at the top of `ash.lua`.
+Run **ash** from norns **SELECT**. The same control summary lives in the comment block at the top of `ashsynth.lua`.
 
-For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ash.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
+For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ashsynth.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
 
 ---
 
