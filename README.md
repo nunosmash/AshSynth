@@ -1,8 +1,8 @@
 # ASH
 
-![AshSynth](https://raw.githubusercontent.com/nunosmash/AshSynth/main/AshSynth.png)
+[![Watch the AshSynth demo](https://raw.githubusercontent.com/nunosmash/AshSynth/main/demo.png)](https://www.youtube.com/watch?v=Nx3XF4gt7iM)
 
-**Demo:** [YouTube](https://www.youtube.com/watch?v=Nx3XF4gt7iM)
+*Click the image above to watch the demo on YouTube.*
 
 **ASH** is a **monophonic synthesizer** script for [norns](https://monome.org/docs/norns/). It starts from a familiar dual-oscillator → LP filter → dual-ADSR layout, then adds norns-friendly UI and a few sound-design choices of its own. The screen stays live; parameters show as bar graphs so you can read the patch at a glance.
 
