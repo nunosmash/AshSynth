@@ -23,6 +23,7 @@ ASH feels like a compact analog mono synth, tuned for **hands-on use on norns** 
 
 ---
 
+
 ## Highlights
 
 | Area | Details |
@@ -35,7 +36,7 @@ ASH feels like a compact analog mono synth, tuned for **hands-on use on norns** 
 | **FX** | Delay (free or clock, 19 divisions), reverb (room / damp) |
 | **Performance** | MIDI (bend, aftertouch), 5×8 **grid** keyboard, **TouchOSC** via [toga](https://github.com/wangpy/toga) |
 | **Navigation** | 9 pages; **hold K2 / K3** to scroll pages quickly; **K1** combos for INIT / RAND |
-| **Presets** | `ash-NN.pset`; **MIDI channel 5** Program Change recall |
+| **Presets** | `ashsynth-NN.pset`; **MIDI channel 5** Program Change recall |
 
 What sets ASH apart: a **page-based norns workflow** over the whole synth, a touch of passersby-style FM without leaving the mono voice, and an LFO section aimed at **moving patches** rather than static tones.
 
@@ -84,8 +85,8 @@ On the LFO page, `^` / `v` on the right means more destinations below — use **
 ## Install
 
 ```
-dust/code/ashsynth/
-  ashsynth.lua
+dust/code/ash/
+  ash.lua
   lib/ash_engine.lua
   lib/Engine_Ash.sc
 ```
@@ -98,8 +99,8 @@ For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in
 
 ## Presets
 
-- Save path: `dust/data/ashsynth/ash-NN.pset`
-- Older `ash_synth` and `asynth` preset names are still tried on load.
+- Save path: `dust/data/ashsynth/ashsynth-NN.pset`
+- Older `ash/`, `ash_synth/`, `asynth/` preset names are still tried on load.
 - **MIDI channel 5** Program Change → load matching preset number
 
 ## PARAMETERS menu
