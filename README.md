@@ -1,4 +1,4 @@
-# ASH Synth
+# AshSynth
 
 [![Watch the AshSynth demo](https://raw.githubusercontent.com/nunosmash/AshSynth/main/demo.png)](https://www.youtube.com/watch?v=Nx3XF4gt7iM)
 
