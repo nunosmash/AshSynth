@@ -85,7 +85,7 @@ On the LFO page, `^` / `v` on the right means more destinations below — use **
 
 ```
 dust/code/ashsynth/
-  ash.lua
+  ashsynth.lua
   lib/ash_engine.lua
   lib/Engine_Ash.sc
 ```
