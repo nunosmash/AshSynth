@@ -90,16 +90,17 @@ dust/code/ash/
   lib/Engine_Ash.sc
 ```
 
-Run **ash** from norns **SELECT**. The same control summary lives in the comment block at the top of `ashsynth.lua`.
+Run **ash** from norns **SELECT**. The same control summary lives in the comment block at the top of `ash.lua`.
 
-For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ashsynth.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
+For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ash.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
 
 ---
 
 ## Presets
 
 - Save path: `dust/data/ashsynth/ashsynth-NN.pset`
-- **MIDI** Program Change → load matching preset number
+- Older `ash/`, `ash_synth/`, `asynth/` preset names are still tried on load.
+- **MIDI channel 5** Program Change → load matching preset number
 
 ## PARAMETERS menu
 
@@ -108,10 +109,10 @@ For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in
 
 ## Screen
 
-The display redraws every frame (overriding the default blank behavior). Parameters, envelopes, and a note LED stay visible while you play.
+While the script is running, the display redraws at **15 fps** and calls **`screen.ping()`** so norns does not put the OLED to sleep. Parameter bars, envelopes, and a note LED stay visible without waiting for encoder input.
 
 ---
 
 ## Version
 
-Engine `Engine_Ash.sc` · UI `ash.lua` ~v1.1.8 — built for norns with the SuperCollider Crone engine.
+Engine `Engine_Ash.sc` · UI `ashsynth.lua` ~v1.1.8 — built for norns with the SuperCollider Crone engine.
