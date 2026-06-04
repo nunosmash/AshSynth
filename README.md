@@ -99,8 +99,7 @@ For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in
 ## Presets
 
 - Save path: `dust/data/ashsynth/ashsynth-NN.pset`
-- Older `ash/`, `ash_synth/`, `asynth/` preset names are still tried on load.
-- **MIDI channel 5** Program Change → load matching preset number
+- **MIDI** Program Change → load matching preset number
 
 ## PARAMETERS menu
 
