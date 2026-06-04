@@ -84,7 +84,7 @@ On the LFO page, `^` / `v` on the right means more destinations below — use **
 ## Install
 
 ```
-dust/code/ash/
+dust/code/ashsynth/
   ash.lua
   lib/ash_engine.lua
   lib/Engine_Ash.sc
@@ -98,7 +98,7 @@ For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in
 
 ## Presets
 
-- Save path: `dust/data/ash/ash-NN.pset`
+- Save path: `dust/data/ashsynth/ash-NN.pset`
 - Older `ash_synth` and `asynth` preset names are still tried on load.
 - **MIDI channel 5** Program Change → load matching preset number
 
