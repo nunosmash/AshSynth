@@ -10,7 +10,7 @@
 
 ## What it sounds like
 
-ASH feels like a compact analog mono synth, tuned for **hands-on use on norns** rather than menu diving.
+AshSynth is designed to be a genuine standalone synth, capable of serving as a complete instrument in its own right.
 
 - **Mono voice** — one note at a time, clear and direct; good for bass, leads, and short pads or sequences.
 - **Dual oscillators** — wave, pitch, octave, level, and **detune** live on separate OSC1 / OSC2 pages so each source is easy to shape on its own.
