@@ -16,7 +16,7 @@
 --
 -- MIDI / grid
 --   MIDI in (PARAMETERS > input), pitch bend, aftertouch
---   Program Change on ch 5 → preset ash-NN.pset
+--   Program Change on ch 5 → preset ashsynth-NN.pset
 --   Grid 5×8 keyboard (optional; TouchOSC via toga)
 
 local MusicUtil = require "musicutil"
@@ -89,8 +89,8 @@ local function any_note_held()
   return next(held_notes) ~= nil
 end
 
-local PRESET_DIR = "ash"
-local PRESET_PREFIX = "ash-"
+local PRESET_DIR = "ashsynth"
+local PRESET_PREFIX = "ashsynth-"
 
 -- Per-page param order (E2 cycles)
 local page_params = {
@@ -643,20 +643,26 @@ end
 
 function load_preset(num)
   local n = string.format("%02d", num)
-  local path = _path.data .. PRESET_DIR .. "/" .. PRESET_PREFIX .. n .. ".pset"
-  if not util.file_exists(path) then
-    path = _path.data .. "ash_synth/ash_synth-" .. n .. ".pset"
+  local candidates = {
+    _path.data .. PRESET_DIR .. "/" .. PRESET_PREFIX .. n .. ".pset",
+    _path.data .. "ash/ash-" .. n .. ".pset",
+    _path.data .. "ash_synth/ash_synth-" .. n .. ".pset",
+    _path.data .. "asynth/asynth-" .. n .. ".pset",
+  }
+  local path
+  for _, p in ipairs(candidates) do
+    if util.file_exists(p) then
+      path = p
+      break
+    end
   end
-  if not util.file_exists(path) then
-    path = _path.data .. "asynth/asynth-" .. n .. ".pset"
-  end
-  if util.file_exists(path) then
+  if path then
     params:read(path)
     params:bang()
     Ash.push_engine_state()
     print("불러온 프리셋: " .. path)
   else
-    print("프리셋 없음")
+    print("프리셋 없음: " .. PRESET_DIR .. "/" .. PRESET_PREFIX .. n .. ".pset")
   end
 end
 
