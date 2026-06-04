@@ -1,4 +1,4 @@
--- AshSynth v1.1.8 — classic mono synth (norns)
+-- AshSynth v1.1.9 — classic mono synth (norns)
 --
 -- Encoders
 --   E1  page
@@ -47,6 +47,8 @@ local ENV_W = BAR_W
 local NOTE_LED_X = 19
 local NOTE_LED_Y = 5  
 local BAR_H = 3
+local RATE_LED_X = 34  -- between "Rate" label and level bar
+local RATE_LED_SIZE = 2
 local ROW_H = 10
 local HEADER_LINE_Y = 12
 local TOP_Y = 21
@@ -349,6 +351,21 @@ local function lfo_wave_amp(t, idx)
   end
 end
 
+-- LFO page: ramp blink between "Rate" label and bar (phase = rate Hz, shape from lfo_shape)
+local function draw_lfo_rate_led(baseline_y, sel)
+  local rate = params:get("lfo_rate")
+  if not rate or rate <= 0 then return end
+  local phase = (util.time() * rate) % 1
+  local amp = lfo_wave_amp(phase, params:get("lfo_shape") or 1)
+  local level = util.round(util.clamp(amp * 0.5 + 0.5, 0, 1) * (sel and 15 or 11))
+  if level < 1 then return end
+  local bar_y = baseline_y - BAR_H - 1
+  local led_y = bar_y + math.max(0, math.floor((BAR_H - RATE_LED_SIZE) * 0.5))
+  screen.level(level)
+  screen.rect(RATE_LED_X, led_y, RATE_LED_SIZE, RATE_LED_SIZE)
+  screen.fill()
+end
+
 local function draw_wave_preview(x, y, w, h, shape_idx, pw, sel, kind)
   screen.level(sel and 12 or 5)
   local mid = y + h / 2
@@ -500,7 +517,10 @@ end
 local function draw_page_lfo()
   update_lfo_scroll()
   local rh = 7
-  draw_hrow(row_y(0, rh), param_norm("lfo_rate"), is_selected("lfo_rate"), "Rate", param_val_str("lfo_rate"))
+  local rate_y = row_y(0, rh)
+  local rate_sel = is_selected("lfo_rate")
+  draw_hrow(rate_y, param_norm("lfo_rate"), rate_sel, "Rate", param_val_str("lfo_rate"))
+  draw_lfo_rate_led(rate_y, rate_sel)
 
   local sy = row_y(1, rh)
   local shape_sel = is_selected("lfo_shape")
@@ -568,6 +588,7 @@ function redraw()
     end
   end
   screen.update()
+  screen.ping()
 end
 
 local function cc_to_param(cc)
