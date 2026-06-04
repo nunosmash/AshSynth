@@ -22,7 +22,7 @@
 local MusicUtil = require "musicutil"
 local Ash = include("lib/ash_engine")
 if not Ash or not Ash.add_params then
-  Ash = include("ash/lib/ash_engine")
+  Ash = include("ashsynth/lib/ash_engine")
 end
 
 engine.name = "Ash"
