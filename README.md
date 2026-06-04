@@ -35,9 +35,9 @@ AshSynth is designed to be a genuine standalone synth, capable of serving as a c
 | **FX** | Delay (free or clock, 19 divisions), reverb (room / damp) |
 | **Performance** | MIDI (bend, aftertouch), 5×8 **grid** keyboard, **TouchOSC** via [toga](https://github.com/wangpy/toga) |
 | **Navigation** | 9 pages; **hold K2 / K3** to scroll pages quickly; **K1** combos for INIT / RAND |
-| **Presets** | `ashsynth-NN.pset`; **MIDI channel 5** Program Change recall |
+| **Presets** | `ashsynth-NN.pset`; **MIDI** Program Change recall |
 
-What sets ASH apart: a **page-based norns workflow** over the whole synth, a touch of passersby-style FM without leaving the mono voice, and an LFO section aimed at **moving patches** rather than static tones.
+What sets AshSynth apart: a **page-based norns workflow** over the whole synth, a touch of passersby-style FM without leaving the mono voice, and an LFO section aimed at **moving patches** rather than static tones.
 
 ---
 
@@ -84,22 +84,21 @@ On the LFO page, `^` / `v` on the right means more destinations below — use **
 ## Install
 
 ```
-dust/code/ash/
-  ash.lua
+dust/code/ashsynth/
+  ashsynth.lua
   lib/ash_engine.lua
   lib/Engine_Ash.sc
 ```
 
-Run **ash** from norns **SELECT**. The same control summary lives in the comment block at the top of `ash.lua`.
+Run **ashsynth** from norns **SELECT**. The same control summary lives in the comment block at the top of `ashsynth.lua`.
 
-For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ash.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
+For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in `ashsynth.lua` active (`code/toga` or a `toga/` folder where your norns setup expects it).
 
 ---
 
 ## Presets
 
 - Save path: `dust/data/ashsynth/ashsynth-NN.pset`
-- Older `ash/`, `ash_synth/`, `asynth/` preset names are still tried on load.
 - **MIDI channel 5** Program Change → load matching preset number
 
 ## PARAMETERS menu
