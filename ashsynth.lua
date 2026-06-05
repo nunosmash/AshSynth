@@ -1,4 +1,4 @@
--- AshSynth v1.3.6 — classic mono synth (norns)
+-- AshSynth v1.3.8 — classic mono synth (norns)
 --
 -- Encoders
 --   E1  page

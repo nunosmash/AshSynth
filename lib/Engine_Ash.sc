@@ -1,6 +1,6 @@
 // CroneEngine_Ash
 // Classic mono synth: dual osc, LP filter, dual ADSR, LFO, delay, reverb.
-// v1.1.2
+// v1.1.4
 
 Engine_Ash : CroneEngine {
 
@@ -42,12 +42,13 @@ Engine_Ash : CroneEngine {
 				arg out, lfoRate = 1, lfoShape = 0;
 				var lfo, shapes;
 				lfoRate = Lag.kr(lfoRate, 0.01);
+				// Square/Random: map 0–1 UGens to ±1 (LFPulse.kr has lag arg — avoid mis-ordered add/mul)
 				shapes = [
 					SinOsc.kr(lfoRate),
 					LFTri.kr(lfoRate),
 					LFSaw.kr(lfoRate),
-					LFPulse.kr(lfoRate, 0.5, 0),
-					LFNoise0.kr(lfoRate)
+					LFPulse.kr(lfoRate, 0.5).linlin(0, 1, -1, 1),
+					LFNoise0.kr(lfoRate).linlin(0, 1, -1, 1)
 				];
 				lfo = Select.kr(lfoShape.clip(0, 4), shapes);
 				Out.kr(out, lfo);
@@ -81,10 +82,13 @@ Engine_Ash : CroneEngine {
 				lfoFenvAtk, lfoFenvDec, lfoFenvSus, lfoFenvRel, susTarget,
 				filterAtkEff, filterDecEff, filterRelEff,
 				attackRaw, decayRaw, releaseRaw, attackW, decayW, releaseW,
-				cutRatio, lpFreq, rq, glideMod, osc1PwMod, osc2PwMod, det1, det2, noiseMod, fmLfo, fmRaw, driveMod;
+				cutRatio, lpFreq, rq, glideMod, osc1PwMod, osc2PwMod, det1, det2, noiseMod, fmLfo, fmRaw, driveMod,
+				lfoUni, lfo2Uni;
 
 				lfo = In.kr(lfoIn, 1) * Lag.kr(lfoMaster.clip(0, 1), controlLag);
 				lfo2 = In.kr(lfo2In, 1) * Lag.kr(lfo2Master.clip(0, 1), controlLag);
+				lfoUni = (lfo + 1) * 0.5;
+				lfo2Uni = (lfo2 + 1) * 0.5;
 
 				fBase = freq * pitchBendRatio * (((lfo * lfoOscAmt) + (lfo2 * lfo2OscAmt)) * 24).midiratio;
 				// MIX glide + LFO glide (bipolar lfo; 0 when LFO master or waveform center)
@@ -134,8 +138,8 @@ Engine_Ash : CroneEngine {
 					osc1 * (osc2Level / osc1Level.max(0.001))
 				]);
 
-				// FM: MIX level + LFO fills toward 100% (lfo.max(0) = full depth when master on)
-				fmLfo = (lfoFmAmt * lfo.max(0)) + (lfo2FmAmt * lfo2.max(0));
+				// FM: unipolar 0–1 from all shapes (max(0) short-changed square/random)
+				fmLfo = (lfoFmAmt * lfoUni) + (lfo2FmAmt * lfo2Uni);
 				fmRaw = (fmAmount + (fmLfo * (1 - fmAmount))).clip(0, 1);
 				fmAmt = Lag.kr(fmRaw.pow(1.2), controlLag);
 				fmMod = SinOsc.ar(
@@ -195,7 +199,7 @@ Engine_Ash : CroneEngine {
 				signal = signal * ampEnv;
 				signal = signal * (1 + (((lfo * lfoAmpAmt) + (lfo2 * lfo2AmpAmt)) * 0.85));
 				signal = signal * vel.linlin(0, 1, 0.12, 1);
-				driveMod = (drive + (((lfo * lfoDriveAmt * lfo.max(0)) + (lfo2 * lfo2DriveAmt * lfo2.max(0))) * (1 - drive))).clip(0, 1);
+				driveMod = (drive + (((lfoDriveAmt * lfoUni) + (lfo2DriveAmt * lfo2Uni)) * (1 - drive))).clip(0, 1);
 				signal = tanh(signal * (1 + (driveMod.linlin(0, 1, 0, 10)))).softclip * 0.20;
 				signal = signal * killEnv;
 
@@ -206,12 +210,13 @@ Engine_Ash : CroneEngine {
 				arg in, out, lfoIn, lfo2In, mix = 0, lfoDelayAmt = 0, lfo2DelayAmt = 0,
 					lfoMaster = 1, lfo2Master = 1,
 					time = 0.375, feedback = 0.45, filterFc = 4000;
-				var dry, local, wet, outSig, makeup, lfo, lfo2, mixBase, mixEff, lfoUni;
+				var dry, local, wet, outSig, makeup, lfo, lfo2, mixBase, mixEff, lfoUni, lfoMix;
 				mixBase = Lag.kr(mix.clip(0, 1), 0.02);
 				lfo = In.kr(lfoIn, 1) * Lag.kr(lfoMaster.clip(0, 1), 0.02);
 				lfo2 = In.kr(lfo2In, 1) * Lag.kr(lfo2Master.clip(0, 1), 0.02);
-				lfoUni = (lfo * lfoDelayAmt * lfo.max(0)) + (lfo2 * lfo2DelayAmt * lfo2.max(0));
-				mixEff = (mixBase + (lfoUni * (1 - mixBase))).clip(0, 1);
+				lfoUni = (lfo + 1) * 0.5;
+				lfoMix = (lfoUni * lfoDelayAmt) + (((lfo2 + 1) * 0.5) * lfo2DelayAmt);
+				mixEff = (mixBase + (lfoMix * (1 - mixBase))).clip(0, 1);
 				time = Lag.kr(time.clip(0.01, 2), 0.02);
 				feedback = Lag.kr(feedback.clip(0, 0.95), 0.02);
 				dry = In.ar(in, 2);
@@ -228,12 +233,13 @@ Engine_Ash : CroneEngine {
 			SynthDef(\asynthReverb, {
 				arg in, out, lfoIn, lfo2In, mix = 0, lfoReverbAmt = 0, lfo2ReverbAmt = 0,
 					lfoMaster = 1, lfo2Master = 1, room = 0.8, damp = 0.4;
-				var dry, wet, outSig, makeup, lfo, lfo2, mixBase, mixEff, lfoUni;
+				var dry, wet, outSig, makeup, lfo, lfo2, mixBase, mixEff, lfoUni, lfoMix;
 				mixBase = Lag.kr(mix.clip(0, 1), 0.02);
 				lfo = In.kr(lfoIn, 1) * Lag.kr(lfoMaster.clip(0, 1), 0.02);
 				lfo2 = In.kr(lfo2In, 1) * Lag.kr(lfo2Master.clip(0, 1), 0.02);
-				lfoUni = (lfo * lfoReverbAmt * lfo.max(0)) + (lfo2 * lfo2ReverbAmt * lfo2.max(0));
-				mixEff = (mixBase + (lfoUni * (1 - mixBase))).clip(0, 1);
+				lfoUni = (lfo + 1) * 0.5;
+				lfoMix = (lfoUni * lfoReverbAmt) + (((lfo2 + 1) * 0.5) * lfo2ReverbAmt);
+				mixEff = (mixBase + (lfoMix * (1 - mixBase))).clip(0, 1);
 				dry = In.ar(in, 2);
 				wet = FreeVerb2.ar(dry[0], dry[1], mixEff, room, damp);
 				outSig = (dry * (1 - mixEff)) + wet;

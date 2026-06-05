@@ -117,4 +117,4 @@ While the script is running, the display redraws at **15 fps** and calls **`scre
 
 ## Version
 
-UI `ashsynth.lua` **v1.3.6** · Engine `Engine_Ash.sc` **v1.1.2** — built for norns with the SuperCollider Crone engine.
+UI `ashsynth.lua` **v1.3.8** · Engine `Engine_Ash.sc` **v1.1.4** — built for norns with the SuperCollider Crone engine.
