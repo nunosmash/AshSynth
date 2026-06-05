@@ -1,4 +1,4 @@
--- AshSynth v1.1.9 — classic mono synth (norns)
+-- AshSynth v1.2.0 — classic mono synth (norns)
 --
 -- Encoders
 --   E1  page
@@ -15,7 +15,7 @@
 --   OSC1 · OSC2 · MIX · FILTER · FENV · AENV · LFO · DELAY · REVERB
 --
 -- MIDI / grid
---   MIDI in (PARAMETERS > input), pitch bend, aftertouch
+--   MIDI in (PARAMETERS > input), pitch bend, velocity
 --   Program Change on ch 5 → preset ashsynth-NN.pset
 --   Grid 5×8 keyboard (optional; TouchOSC via toga)
 
@@ -703,8 +703,6 @@ local function midi_event(data)
     grid_led_note(msg.note, 0, false)
   elseif msg.type == "pitchbend" then
     engine.pitchBend(MusicUtil.interval_to_ratio(((util.round(msg.val / 2)) / 8192 * 2 - 1) * params:get("bend_range")))
-  elseif msg.type == "channel_pressure" or msg.type == "key_pressure" then
-    engine.pressure(msg.val / 127)
   elseif msg.type == "cc" then
     local pid = cc_to_param(msg.cc)
     if pid then set_cc_value(pid, msg.val / 127) end

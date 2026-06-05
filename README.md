@@ -33,7 +33,7 @@ AshSynth is designed to be a genuine standalone synth, capable of serving as a c
 | **Filter** | LP + resonance, key tracking, dedicated filter ADSR |
 | **LFO** | 5 shapes + Random, master depth, 12 destinations; scroll with E2 on the LFO page (incl. drive, delay & reverb mix) |
 | **FX** | Delay (free or clock, 19 divisions), reverb (room / damp) |
-| **Performance** | MIDI (bend, aftertouch), 5×8 **grid** keyboard, **TouchOSC** via [toga](https://github.com/wangpy/toga) |
+| **Performance** | MIDI (bend, velocity), 5×8 **grid** keyboard, **TouchOSC** via [toga](https://github.com/wangpy/toga) |
 | **Navigation** | 9 pages; **hold K2 / K3** to scroll pages quickly; **K1** combos for INIT / RAND |
 | **Presets** | `ashsynth-NN.pset`; **MIDI** Program Change recall |
 
@@ -46,7 +46,7 @@ What sets AshSynth apart: a **page-based norns workflow** over the whole synth, 
 ```
 OSC1 + OSC2 (+ FM layer) + noise
   → LP filter (filter env, key track, LFO)
-  → amp (amp env, drive, velocity, pressure)
+  → amp (amp env, drive, velocity)
   → delay → reverb → out
 ```
 

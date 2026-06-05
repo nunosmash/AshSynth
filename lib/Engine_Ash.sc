@@ -51,7 +51,7 @@ Engine_Ash : CroneEngine {
 			}).add;
 
 			SynthDef(\asynthVoice, {
-				arg out, lfoIn, gate, killGate, freq = 220, pitchBendRatio = 1, glide = 0, glideOn = 1, vel = 1, pressure = 0,
+				arg out, lfoIn, gate, killGate, freq = 220, pitchBendRatio = 1, glide = 0, glideOn = 1, vel = 1,
 				osc1Wave = 1, osc2Wave = 1, osc1Level = 0.5, osc2Level = 0, osc1Pw = 0.5, osc2Pw = 0.5,
 				osc1Pitch = 0, osc1Octave = 0, osc2Pitch = 0, osc2Octave = 0,
 				noiseLevel = 0, osc1Detune = 0, osc2Detune = 0, fmAmount = 0,
@@ -154,8 +154,7 @@ Engine_Ash : CroneEngine {
 
 				signal = signal * ampEnv;
 				signal = signal * (1 + (lfo * lfoAmpAmt * 0.85));
-				signal = signal * vel.linlin(0, 1, 0.15, 1);
-				signal = signal * (1 + (pressure * 0.35));
+				signal = signal * vel.linlin(0, 1, 0.12, 1);
 				driveMod = (drive + (lfo * lfoDriveAmt * lfo.max(0) * (1 - drive))).clip(0, 1);
 				signal = tanh(signal * (1 + (driveMod.linlin(0, 1, 0, 10)))).softclip * 0.20;
 				signal = signal * killEnv;
@@ -311,10 +310,6 @@ Engine_Ash : CroneEngine {
 
 		this.addCommand(\pitchBend, "f", { arg msg;
 			synthVoice.set(\pitchBendRatio, msg[1]);
-		});
-
-		this.addCommand(\pressure, "f", { arg msg;
-			synthVoice.set(\pressure, msg[1]);
 		});
 
 		this.addCommand(\glide, "f", { arg msg; synthVoice.set(\glide, msg[1]) });
