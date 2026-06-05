@@ -15,8 +15,9 @@ AshSynth is designed to be a genuine standalone synth, capable of serving as a c
 - **Mono voice** — one note at a time, clear and direct; good for bass, leads, and short pads or sequences.
 - **Dual oscillators** — wave, pitch, octave, level, and **detune** live on separate OSC1 / OSC2 pages so each source is easy to shape on its own.
 - **FM layer** — a high-ratio FM voice in MIX; depth can be swept with the LFO.
-- **Split filter & amp envelopes** — filter moves on its own, or **LINK** ties it to the amp envelope.
-- **Wide LFO** — routes to pitch, filter, amp, pulse width, detune, noise, FM, glide, drive, delay mix, and reverb mix; **LFO Master** scales all depths at once.
+- **Split filter & amp envelopes** — dedicated **FENV** and **AENV** pages; **LINK** ties base ADSR values together, and when LINK is on the amp envelope follows the filter envelope (including LFO filter-env modulation).
+- **Dual LFO** — **LFO1** and **LFO2** each have rate, shape, master depth, and **16 destinations**; both sum onto the same targets for layered modulation.
+- **Filter-env LFO (A/D/S/R)** — LFO can modulate filter envelope **Attack**, **Decay**, and **Release** times (± around the knob) and **Sustain** level in real time.
 - **Delay & reverb** — clock-synced delay (triplets, dotted notes, bars, and more) plus FreeVerb2 reverb, with light makeup gain so wet mixes do not collapse in level.
 
 **K1 + K3** randomizes for quick patch discovery; **K1 + K2** restores factory defaults after experiments.
@@ -31,13 +32,15 @@ AshSynth is designed to be a genuine standalone synth, capable of serving as a c
 | **Phase lock** | When settings match and detune returns to 0, OSC2 **locks phase** to OSC1 — less “stuck” beating after detune |
 | **MIX** | Noise, FM, glide (All / Legato) |
 | **Filter** | LP + resonance, key tracking, dedicated filter ADSR |
-| **LFO** | 5 shapes + Random, master depth, 12 destinations; scroll with E2 on the LFO page (incl. drive, delay & reverb mix) |
+| **Envelopes** | Separate **FENV** / **AENV** pages; **LINK** syncs ADSR knobs; LINK on → amp follows filter env |
+| **LFO1 / LFO2** | 5 shapes + Random, master depth, **16 destinations** each; rate LED on LFO pages; E2 scrolls destinations |
+| **LFO destinations** | Amp, Pitch, Filter, **FEnv A / D / S / R**, PW, Detune 1 & 2, Noise, FM, Glide, Drive, Delay mix, Reverb mix |
 | **FX** | Delay (free or clock, 19 divisions), reverb (room / damp) |
 | **Performance** | MIDI (bend, velocity), 5×8 **grid** keyboard, **TouchOSC** via [toga](https://github.com/wangpy/toga) |
-| **Navigation** | 9 pages; **hold K2 / K3** to scroll pages quickly; **K1** combos for INIT / RAND |
+| **Navigation** | **10 pages**; **hold K2 / K3** to scroll pages quickly; **K1** combos for INIT / RAND |
 | **Presets** | `ashsynth-NN.pset`; **MIDI** Program Change recall |
 
-What sets AshSynth apart: a **page-based norns workflow** over the whole synth, a touch of passersby-style FM without leaving the mono voice, and an LFO section aimed at **moving patches** rather than static tones.
+What sets AshSynth apart: a **page-based norns workflow** over the whole synth, a touch of passersby-style FM without leaving the mono voice, and **two LFOs** aimed at **moving patches** rather than static tones.
 
 ---
 
@@ -45,12 +48,12 @@ What sets AshSynth apart: a **page-based norns workflow** over the whole synth, 
 
 ```
 OSC1 + OSC2 (+ FM layer) + noise
-  → LP filter (filter env, key track, LFO)
-  → amp (amp env, drive, velocity)
+  → LP filter (filter env, key track, LFO1 + LFO2)
+  → amp (amp env or linked filter env, drive, velocity, LFO)
   → delay → reverb → out
 ```
 
-The LFO runs on a separate control bus and feeds the voice (and glide / FM, etc.) in parallel.
+LFO1 and LFO2 run on separate control buses and feed the voice, glide, FM, drive, delay, and reverb in parallel.
 
 ---
 
@@ -61,7 +64,7 @@ The LFO runs on a separate control bus and feeds the voice (and glide / FM, etc.
 | | |
 |--|--|
 | **E1** | Page |
-| **E2** | Parameter (LFO page: scroll destinations) |
+| **E2** | Parameter (LFO1 / LFO2 pages: scroll destinations) |
 | **E3** | Adjust value (pitch steps: 0.1 semitone) |
 
 ### Keys
@@ -73,11 +76,11 @@ The LFO runs on a separate control bus and feeds the voice (and glide / FM, etc.
 | **K1 + K2** | Factory defaults (on-screen: `INIT`) |
 | **K1 + K3** | Random patch (on-screen: `RAND`; OSC pitch picks from −12 / 0 / 7 / 12 st) |
 
-### Pages (9)
+### Pages (10)
 
-`OSC1` · `OSC2` · `MIX` · `FILTER` · `FENV` · `AENV` · `LFO` · `DELAY` · `REVERB`
+`OSC1` · `OSC2` · `MIX` · `FILTER` · `FENV` · `AENV` · `LFO1` · `LFO2` · `DELAY` · `REVERB`
 
-On the LFO page, `^` / `v` on the right means more destinations below — use **E2** to scroll (Pitch, Filter, Amp, PW, Detune, Noise, FM, Glide, Drive, Delay, Reverb).
+On **LFO1** and **LFO2** pages, `^` / `v` on the right means more destinations below — use **E2** to scroll. Destinations: Amp, Pitch, Filter, FEnv A / D / S / R, PW, Detune 1 & 2, Noise, FM, Glide, Drive, Delay, Reverb.
 
 ---
 
@@ -108,10 +111,10 @@ For a TouchOSC grid, install `code/toga` and keep the `togagrid` include line in
 
 ## Screen
 
-While the script is running, the display redraws at **15 fps** and calls **`screen.ping()`** so norns does not put the OLED to sleep. Parameter bars, envelopes, and a note LED stay visible without waiting for encoder input.
+While the script is running, the display redraws at **15 fps** and calls **`screen.ping()`** so norns does not put the OLED to sleep. Parameter bars, envelopes, LFO rate LED, and a note LED stay visible without waiting for encoder input.
 
 ---
 
 ## Version
 
-Engine `Engine_Ash.sc` · UI `ashsynth.lua` ~v1.1.8 — built for norns with the SuperCollider Crone engine.
+UI `ashsynth.lua` **v1.3.6** · Engine `Engine_Ash.sc` **v1.1.2** — built for norns with the SuperCollider Crone engine.

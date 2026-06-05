@@ -1,8 +1,8 @@
--- AshSynth v1.2.0 — classic mono synth (norns)
+-- AshSynth v1.3.6 — classic mono synth (norns)
 --
 -- Encoders
 --   E1  page
---   E2  parameter (LFO page: scroll destinations incl. delay/reverb mix)
+--   E2  parameter (LFO1/LFO2 pages: scroll destinations incl. FEnv A/D/S/R)
 --   E3  adjust
 --
 -- Keys
@@ -11,8 +11,8 @@
 --   K1 + K2  factory reset (INIT)
 --   K1 + K3  random patch  (RAND)
 --
--- Pages (9)
---   OSC1 · OSC2 · MIX · FILTER · FENV · AENV · LFO · DELAY · REVERB
+-- Pages (10)
+--   OSC1 · OSC2 · MIX · FILTER · FENV · AENV · LFO1 · LFO2 · DELAY · REVERB
 --
 -- MIDI / grid
 --   MIDI in (PARAMETERS > input), pitch bend, velocity
@@ -94,6 +94,41 @@ end
 local PRESET_DIR = "ashsynth"
 local PRESET_PREFIX = "ashsynth-"
 
+local lfo_dest_ids = {
+  "lfo_amp_amount",
+  "lfo_osc_amount", "lfo_filter_amount",
+  "lfo_filter_env_attack_amount", "lfo_filter_env_decay_amount", "lfo_filter_env_sustain_amount", "lfo_filter_env_release_amount",
+  "lfo_pw_amount", "lfo_detune1_amount", "lfo_detune2_amount",
+  "lfo_noise_amount", "lfo_fm_amount", "lfo_glide_amount",
+  "lfo_delay_amount", "lfo_reverb_amount", "lfo_drive_amount",
+}
+local lfo_dest_labels = {
+  lfo_osc_amount = "Pitch", lfo_filter_amount = "Filter", lfo_amp_amount = "Amp",
+  lfo_filter_env_attack_amount = "FEnv A",
+  lfo_filter_env_decay_amount = "FEnv D",
+  lfo_filter_env_sustain_amount = "FEnv S",
+  lfo_filter_env_release_amount = "FEnv R",
+  lfo_pw_amount = "PW", lfo_detune1_amount = "Detune1", lfo_detune2_amount = "Detune2",
+  lfo_noise_amount = "Noise", lfo_fm_amount = "FM", lfo_glide_amount = "Glide",
+  lfo_delay_amount = "Delay", lfo_reverb_amount = "Reverb", lfo_drive_amount = "Drive",
+}
+-- LFO2: same modulation targets as LFO1; page title + independent rate/shape/master distinguish them.
+local lfo2_dest_ids = {}
+for _, id in ipairs(lfo_dest_ids) do
+  local id2 = "lfo2_" .. string.sub(id, 5)
+  lfo2_dest_ids[#lfo2_dest_ids + 1] = id2
+  lfo_dest_labels[id2] = lfo_dest_labels[id]
+end
+
+local function build_lfo_page(prefix, dest_ids)
+  local page = {prefix .. "rate", prefix .. "shape", prefix .. "master"}
+  for _, id in ipairs(dest_ids) do page[#page + 1] = id end
+  return page
+end
+
+local lfo_page = build_lfo_page("lfo_", lfo_dest_ids)
+local lfo2_page = build_lfo_page("lfo2_", lfo2_dest_ids)
+
 -- Per-page param order (E2 cycles)
 local page_params = {
   {"osc1_wave", "osc1_level", "osc1_detune", "osc1_pitch", "osc1_octave", "osc1_pw"},
@@ -102,32 +137,20 @@ local page_params = {
   {"lp_cutoff", "lp_resonance", "lp_env_amount", "lp_tracking"},
   {"filter_attack", "filter_decay", "filter_sustain", "filter_release", "filter_env_link_amp"},
   {"amp_attack", "amp_decay", "amp_sustain", "amp_release", "drive"},
-  {"lfo_rate", "lfo_shape", "lfo_master", "lfo_osc_amount", "lfo_filter_amount", "lfo_amp_amount",
-    "lfo_pw_amount", "lfo_detune1_amount", "lfo_detune2_amount", "lfo_noise_amount", "lfo_fm_amount", "lfo_glide_amount",
-    "lfo_delay_amount", "lfo_reverb_amount", "lfo_drive_amount"},
+  lfo_page,
+  lfo2_page,
   {"delay_mix", "delay_time", "delay_feedback", "delay_sync", "delay_division", "delay_filter"},
   {"reverb_mix", "reverb_room", "reverb_damp"},
 }
 
-local page_names = {"OSC1", "OSC2", "MIX", "FILTER", "FILTER ENV", "AMP ENV", "LFO", "DELAY", "REVERB"}
+local page_names = {"OSC1", "OSC2", "MIX", "FILTER", "FILTER ENV", "AMP ENV", "LFO1", "LFO2", "DELAY", "REVERB"}
 local NUM_PAGES = #page_names
 
 local LFO_PAGE = 7
+local LFO2_PAGE = 8
 local LFO_VISIBLE_DEST = 4
 local LFO_SCROLL_X = 100
-local lfo_dest_ids = {
-  "lfo_osc_amount", "lfo_filter_amount", "lfo_amp_amount",
-  "lfo_pw_amount", "lfo_detune1_amount", "lfo_detune2_amount",
-  "lfo_noise_amount", "lfo_fm_amount", "lfo_glide_amount",
-  "lfo_delay_amount", "lfo_reverb_amount", "lfo_drive_amount",
-}
-local lfo_dest_labels = {
-  lfo_osc_amount = "Pitch", lfo_filter_amount = "Filter", lfo_amp_amount = "Amp",
-  lfo_pw_amount = "PW", lfo_detune1_amount = "Detune1", lfo_detune2_amount = "Detune2",
-  lfo_noise_amount = "Noise", lfo_fm_amount = "FM", lfo_glide_amount = "Glide",
-  lfo_delay_amount = "Delay", lfo_reverb_amount = "Reverb", lfo_drive_amount = "Drive",
-}
-local lfo_scroll = 0
+local lfo_scroll = { [LFO_PAGE] = 0, [LFO2_PAGE] = 0 }
 
 local builtin_cc = {
   [1] = "lp_env_amount", [7] = "drive", [71] = "lp_resonance", [74] = "lp_cutoff",
@@ -139,8 +162,13 @@ local assign_cc_options = {
   "noise_level", "fm_amount", "glide", "lp_cutoff", "lp_resonance", "lp_env_amount",
   "filter_attack", "filter_decay", "amp_attack", "amp_decay",
   "lfo_rate", "lfo_master", "lfo_osc_amount", "lfo_filter_amount", "lfo_amp_amount",
+  "lfo_filter_env_attack_amount", "lfo_filter_env_decay_amount", "lfo_filter_env_sustain_amount", "lfo_filter_env_release_amount",
   "lfo_pw_amount", "lfo_detune1_amount", "lfo_detune2_amount", "lfo_noise_amount", "lfo_fm_amount", "lfo_glide_amount",
   "lfo_delay_amount", "lfo_reverb_amount", "lfo_drive_amount",
+  "lfo2_rate", "lfo2_master", "lfo2_osc_amount", "lfo2_filter_amount", "lfo2_amp_amount",
+  "lfo2_filter_env_attack_amount", "lfo2_filter_env_decay_amount", "lfo2_filter_env_sustain_amount", "lfo2_filter_env_release_amount",
+  "lfo2_pw_amount", "lfo2_detune1_amount", "lfo2_detune2_amount", "lfo2_noise_amount", "lfo2_fm_amount", "lfo2_glide_amount",
+  "lfo2_delay_amount", "lfo2_reverb_amount", "lfo2_drive_amount",
   "delay_mix", "delay_feedback", "reverb_mix", "drive",
 }
 
@@ -173,8 +201,23 @@ local function restore_page_param_index(pg)
   param_index = clamp_index(saved, 1, page_param_count(pg))
 end
 
-local function lfo_dest_scroll_max()
-  return math.max(0, #lfo_dest_ids - LFO_VISIBLE_DEST)
+local function current_lfo_dest_ids()
+  if page_index == LFO2_PAGE then return lfo2_dest_ids end
+  if page_index == LFO_PAGE then return lfo_dest_ids end
+  return nil
+end
+
+local function get_lfo_scroll()
+  return lfo_scroll[page_index] or 0
+end
+
+local function set_lfo_scroll(v)
+  if lfo_scroll[page_index] ~= nil then lfo_scroll[page_index] = v end
+end
+
+local function lfo_dest_scroll_max(dest_ids)
+  dest_ids = dest_ids or current_lfo_dest_ids() or lfo_dest_ids
+  return math.max(0, #dest_ids - LFO_VISIBLE_DEST)
 end
 
 local function enc_step(delta)
@@ -184,17 +227,20 @@ local function enc_step(delta)
 end
 
 local function update_lfo_scroll()
-  if page_index ~= LFO_PAGE then return end
+  local dest_ids = current_lfo_dest_ids()
+  if not dest_ids then return end
   local pid = selected_param_id()
   if not pid then return end
-  for i, id in ipairs(lfo_dest_ids) do
+  local scroll = get_lfo_scroll()
+  for i, id in ipairs(dest_ids) do
     if id == pid then
       local dest_i = i - 1
-      if dest_i < lfo_scroll then
-        lfo_scroll = dest_i
-      elseif dest_i >= lfo_scroll + LFO_VISIBLE_DEST then
-        lfo_scroll = dest_i - LFO_VISIBLE_DEST + 1
+      if dest_i < scroll then
+        scroll = dest_i
+      elseif dest_i >= scroll + LFO_VISIBLE_DEST then
+        scroll = dest_i - LFO_VISIBLE_DEST + 1
       end
+      set_lfo_scroll(scroll)
       return
     end
   end
@@ -204,6 +250,7 @@ local option_param_lists = {
   osc1_wave = function() return Ash.options.WAVE end,
   osc2_wave = function() return Ash.options.WAVE end,
   lfo_shape = function() return Ash.options.LFO_SHAPE end,
+  lfo2_shape = function() return Ash.options.LFO_SHAPE end,
   delay_sync = function() return Ash.options.DELAY_SYNC end,
   delay_division = function() return Ash.options.DELAY_DIV end,
   glide_mode = function() return Ash.options.GLIDE_MODE end,
@@ -244,11 +291,12 @@ local function param_val_str(pid)
   if pid == "osc1_wave" then return Ash.options.WAVE[params:get(pid)]
   elseif pid == "osc2_wave" then return Ash.options.WAVE[params:get(pid)]
   elseif pid == "lfo_shape" then return Ash.options.LFO_SHAPE[params:get(pid)]
+  elseif pid == "lfo2_shape" then return Ash.options.LFO_SHAPE[params:get(pid)]
   elseif pid == "delay_sync" then return Ash.options.DELAY_SYNC[params:get(pid)]
   elseif pid == "delay_division" then return Ash.options.DELAY_DIV[params:get(pid)]
   elseif pid == "glide_mode" then return Ash.options.GLIDE_MODE[params:get(pid)]
   elseif pid == "filter_env_link_amp" then return Ash.options.ENV_LINK[params:get(pid)]
-  elseif pid == "lfo_master" or lfo_dest_labels[pid] then
+  elseif pid == "lfo_master" or pid == "lfo2_master" or lfo_dest_labels[pid] then
     return util.round(params:get(pid) * 100) .. "%"
   elseif pid == "osc1_pitch" or pid == "osc2_pitch" then
     local v = util.round(params:get(pid), 0.1)
@@ -352,11 +400,11 @@ local function lfo_wave_amp(t, idx)
 end
 
 -- LFO page: ramp blink between "Rate" label and bar (phase = rate Hz, shape from lfo_shape)
-local function draw_lfo_rate_led(baseline_y, sel)
-  local rate = params:get("lfo_rate")
+local function draw_lfo_rate_led(baseline_y, sel, rate_pid, shape_pid)
+  local rate = params:get(rate_pid)
   if not rate or rate <= 0 then return end
   local phase = (util.time() * rate) % 1
-  local amp = lfo_wave_amp(phase, params:get("lfo_shape") or 1)
+  local amp = lfo_wave_amp(phase, params:get(shape_pid) or 1)
   local level = util.round(util.clamp(amp * 0.5 + 0.5, 0, 1) * (sel and 15 or 11))
   if level < 1 then return end
   local bar_y = baseline_y - BAR_H - 1
@@ -499,51 +547,61 @@ local function draw_page_aenv()
   draw_hrow(env_depth_y(), param_norm("drive"), is_selected("drive"), "Drive", param_val_str("drive"))
 end
 
-local function draw_lfo_scroll_hint()
-  local max_scroll = lfo_dest_scroll_max()
+local function draw_lfo_scroll_hint(dest_ids)
+  local max_scroll = lfo_dest_scroll_max(dest_ids)
   if max_scroll <= 0 then return end
   local rh = 7
+  local scroll = get_lfo_scroll()
   screen.level(6)
-  if lfo_scroll > 0 then
+  if scroll > 0 then
     screen.move(LFO_SCROLL_X, row_y(3, rh) - 4)
     screen.text("^")
   end
-  if lfo_scroll < max_scroll then
+  if scroll < max_scroll then
     screen.move(LFO_SCROLL_X, row_y(2 + LFO_VISIBLE_DEST, rh) + 2)
     screen.text("v")
   end
 end
 
-local function draw_page_lfo()
+local function draw_page_lfo_bank(rate_pid, shape_pid, master_pid, dest_ids)
   update_lfo_scroll()
   local rh = 7
+  local scroll = get_lfo_scroll()
   local rate_y = row_y(0, rh)
-  local rate_sel = is_selected("lfo_rate")
-  draw_hrow(rate_y, param_norm("lfo_rate"), rate_sel, "Rate", param_val_str("lfo_rate"))
-  draw_lfo_rate_led(rate_y, rate_sel)
+  local rate_sel = is_selected(rate_pid)
+  draw_hrow(rate_y, param_norm(rate_pid), rate_sel, "Rate", param_val_str(rate_pid))
+  draw_lfo_rate_led(rate_y, rate_sel, rate_pid, shape_pid)
 
   local sy = row_y(1, rh)
-  local shape_sel = is_selected("lfo_shape")
-  local shape_idx = params:get("lfo_shape")
+  local shape_sel = is_selected(shape_pid)
+  local shape_idx = params:get(shape_pid)
   screen.level(shape_sel and 15 or 3)
   screen.move(LBL_X, sy)
   screen.text("Shape")
   local ww, wh = 22, 8
   local wy = sy - wh - 1 + 4
   draw_wave_preview(BAR_X + 4, wy, ww, wh, shape_idx, nil, shape_sel, "lfo")
-  draw_val_right(sy, param_val_str("lfo_shape"), shape_sel and 15 or 4)
+  draw_val_right(sy, param_val_str(shape_pid), shape_sel and 15 or 4)
 
-  draw_hrow(row_y(2, rh), param_norm("lfo_master"), is_selected("lfo_master"), "Mix", param_val_str("lfo_master"))
+  draw_hrow(row_y(2, rh), param_norm(master_pid), is_selected(master_pid), "Mix", param_val_str(master_pid))
 
   for i = 1, LFO_VISIBLE_DEST do
-    local dest_i = lfo_scroll + i
-    local pid = lfo_dest_ids[dest_i]
+    local dest_i = scroll + i
+    local pid = dest_ids[dest_i]
     if pid then
       draw_hrow(row_y(2 + i, rh), param_norm(pid), is_selected(pid),
         lfo_dest_labels[pid] or pid, param_val_str(pid))
     end
   end
-  draw_lfo_scroll_hint()
+  draw_lfo_scroll_hint(dest_ids)
+end
+
+local function draw_page_lfo()
+  draw_page_lfo_bank("lfo_rate", "lfo_shape", "lfo_master", lfo_dest_ids)
+end
+
+local function draw_page_lfo2()
+  draw_page_lfo_bank("lfo2_rate", "lfo2_shape", "lfo2_master", lfo2_dest_ids)
 end
 
 local function draw_page_delay()
@@ -570,6 +628,7 @@ local page_drawers = {
   draw_page_fenv,
   draw_page_aenv,
   draw_page_lfo,
+  draw_page_lfo2,
   draw_page_delay,
   draw_page_reverb,
 }
@@ -734,7 +793,7 @@ function init()
   screen.aa(0)
   page_index = 1
   param_index = 1
-  lfo_scroll = 0
+  lfo_scroll = { [LFO_PAGE] = 0, [LFO2_PAGE] = 0 }
   page_param_index = {}
   for i = 1, NUM_PAGES do
     page_param_index[i] = 1
@@ -835,7 +894,7 @@ function enc(n, delta)
       if #ids > 0 then
         param_index = clamp_index(param_index + step, 1, #ids)
         page_param_index[page_index] = param_index
-        if page_index == LFO_PAGE then update_lfo_scroll() end
+        if page_index == LFO_PAGE or page_index == LFO2_PAGE then update_lfo_scroll() end
       end
     end
   elseif n == 3 then

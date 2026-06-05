@@ -80,9 +80,19 @@ Ash.SYNTH_PARAM_IDS = {
   "filter_attack", "filter_decay", "filter_sustain", "filter_release", "filter_env_link_amp",
   "amp_attack", "amp_decay", "amp_sustain", "amp_release", "drive",
   "lfo_rate", "lfo_shape", "lfo_master",
-  "lfo_osc_amount", "lfo_filter_amount", "lfo_amp_amount", "lfo_pw_amount",
+  "lfo_osc_amount", "lfo_filter_amount",
+  "lfo_filter_env_attack_amount", "lfo_filter_env_decay_amount", "lfo_filter_env_sustain_amount", "lfo_filter_env_release_amount",
+  "lfo_amp_amount", "lfo_pw_amount",
   "lfo_detune1_amount", "lfo_detune2_amount", "lfo_noise_amount", "lfo_fm_amount", "lfo_glide_amount",
   "lfo_delay_amount", "lfo_reverb_amount", "lfo_drive_amount",
+
+  "lfo2_rate", "lfo2_shape", "lfo2_master",
+  "lfo2_osc_amount", "lfo2_filter_amount",
+  "lfo2_filter_env_attack_amount", "lfo2_filter_env_decay_amount", "lfo2_filter_env_sustain_amount", "lfo2_filter_env_release_amount",
+  "lfo2_amp_amount", "lfo2_pw_amount",
+  "lfo2_detune1_amount", "lfo2_detune2_amount", "lfo2_noise_amount", "lfo2_fm_amount", "lfo2_glide_amount",
+  "lfo2_delay_amount", "lfo2_reverb_amount", "lfo2_drive_amount",
+
   "delay_sync", "delay_time", "delay_division", "delay_feedback", "delay_mix", "delay_filter",
   "reverb_mix", "reverb_room", "reverb_damp",
 }
@@ -102,9 +112,19 @@ Ash.FACTORY_PRESET = {
   amp_attack = 0.01, amp_decay = 0.25, amp_sustain = 0.5, amp_release = 0.4,
   drive = 0.2,
   lfo_rate = 1, lfo_shape = 1, lfo_master = 1,
-  lfo_osc_amount = 0, lfo_filter_amount = 0, lfo_amp_amount = 0, lfo_pw_amount = 0,
+  lfo_osc_amount = 0, lfo_filter_amount = 0,
+  lfo_filter_env_attack_amount = 0, lfo_filter_env_decay_amount = 0, lfo_filter_env_sustain_amount = 0, lfo_filter_env_release_amount = 0,
+  lfo_amp_amount = 0, lfo_pw_amount = 0,
   lfo_detune1_amount = 0, lfo_detune2_amount = 0, lfo_noise_amount = 0, lfo_fm_amount = 0, lfo_glide_amount = 0,
   lfo_delay_amount = 0, lfo_reverb_amount = 0, lfo_drive_amount = 0,
+
+  lfo2_rate = 1, lfo2_shape = 1, lfo2_master = 1,
+  lfo2_osc_amount = 0, lfo2_filter_amount = 0,
+  lfo2_filter_env_attack_amount = 0, lfo2_filter_env_decay_amount = 0, lfo2_filter_env_sustain_amount = 0, lfo2_filter_env_release_amount = 0,
+  lfo2_amp_amount = 0, lfo2_pw_amount = 0,
+  lfo2_detune1_amount = 0, lfo2_detune2_amount = 0, lfo2_noise_amount = 0, lfo2_fm_amount = 0, lfo2_glide_amount = 0,
+  lfo2_delay_amount = 0, lfo2_reverb_amount = 0, lfo2_drive_amount = 0,
+
   delay_sync = 2, delay_time = 0.375, delay_division = 9, delay_feedback = 0.45, delay_mix = 0, delay_filter = 4000,
   reverb_mix = 0, reverb_room = 0.8, reverb_damp = 0.4,
 }
@@ -231,7 +251,10 @@ function Ash.add_params()
   params:add{type = "control", id = "filter_release", name = "Release", controlspec = specs.ENV_R, formatter = Formatters.format_secs,
     action = filter_env_action(engine.filterRel, "amp_release")}
   params:add{type = "option", id = "filter_env_link_amp", name = "LINK", options = options.ENV_LINK, default = 1,
-    action = function(v) if v == 2 then sync_amp_env_from_filter() end end}
+    action = function(v)
+      engine_call(engine.filterEnvLinkAmp, v == 2 and 1 or 0)
+      if v == 2 then sync_amp_env_from_filter() end
+    end}
 
   params:add_separator("amp env")
   params:add{type = "control", id = "amp_attack", name = "Attack", controlspec = specs.ENV_A, formatter = Formatters.format_secs,
@@ -246,47 +269,113 @@ function Ash.add_params()
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.drive, v) end}
 
-  params:add_separator("lfo")
-  params:add{type = "control", id = "lfo_rate", name = "LFO Rate", controlspec = specs.LFO_RATE, formatter = Formatters.format_freq,
+  params:add_separator("lfo1")
+  params:add{type = "control", id = "lfo_rate", name = "LFO1 Rate", controlspec = specs.LFO_RATE, formatter = Formatters.format_freq,
     action = function(v) engine_call(engine.lfoRate, v) end}
-  params:add{type = "option", id = "lfo_shape", name = "Waveform", options = options.LFO_SHAPE, default = 1,
+  params:add{type = "option", id = "lfo_shape", name = "LFO1 Waveform", options = options.LFO_SHAPE, default = 1,
     action = function(v) engine_call(engine.lfoShape, v - 1) end}
-  params:add{type = "control", id = "lfo_master", name = "LFO Master", controlspec = specs.LFO_MASTER, default = 1,
+  params:add{type = "control", id = "lfo_master", name = "LFO1 Master", controlspec = specs.LFO_MASTER, default = 1,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoMaster, v) end}
-  params:add{type = "control", id = "lfo_osc_amount", name = "LFO > Osc", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_osc_amount", name = "LFO1 > Osc", controlspec = specs.LFO_AMT,
     action = function(v) engine_call(engine.lfoOscAmt, v) end}
-  params:add{type = "control", id = "lfo_filter_amount", name = "LFO > Filter", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_filter_amount", name = "LFO1 > Filter", controlspec = specs.LFO_AMT,
     action = function(v) engine_call(engine.lfoFilterAmt, v) end}
-  params:add{type = "control", id = "lfo_amp_amount", name = "LFO > Amp", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_filter_env_attack_amount", name = "LFO1 > FEnv Attack", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfoFilterEnvAtkAmt, v) end}
+  params:add{type = "control", id = "lfo_filter_env_decay_amount", name = "LFO1 > FEnv Decay", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfoFilterEnvDecAmt, v) end}
+  params:add{type = "control", id = "lfo_filter_env_sustain_amount", name = "LFO1 > FEnv Sustain", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfoFilterEnvSusAmt, v) end}
+  params:add{type = "control", id = "lfo_filter_env_release_amount", name = "LFO1 > FEnv Release", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfoFilterEnvRelAmt, v) end}
+  params:add{type = "control", id = "lfo_amp_amount", name = "LFO1 > Amp", controlspec = specs.LFO_AMT,
     action = function(v) engine_call(engine.lfoAmpAmt, v) end}
-  params:add{type = "control", id = "lfo_pw_amount", name = "LFO > PW", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_pw_amount", name = "LFO1 > PW", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoPwAmt, v) end}
-  params:add{type = "control", id = "lfo_detune1_amount", name = "LFO > Detune 1", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_detune1_amount", name = "LFO1 > Detune 1", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoDet1Amt, v) end}
-  params:add{type = "control", id = "lfo_detune2_amount", name = "LFO > Detune 2", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_detune2_amount", name = "LFO1 > Detune 2", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoDet2Amt, v) end}
-  params:add{type = "control", id = "lfo_noise_amount", name = "LFO > Noise", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_noise_amount", name = "LFO1 > Noise", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoNoiseAmt, v) end}
-  params:add{type = "control", id = "lfo_fm_amount", name = "LFO > FM", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_fm_amount", name = "LFO1 > FM", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoFmAmt, v) end}
-  params:add{type = "control", id = "lfo_glide_amount", name = "LFO > Glide", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_glide_amount", name = "LFO1 > Glide", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoGlideAmt, v) end}
-  params:add{type = "control", id = "lfo_delay_amount", name = "LFO > Delay", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_delay_amount", name = "LFO1 > Delay", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoDelayAmt, v) end}
-  params:add{type = "control", id = "lfo_reverb_amount", name = "LFO > Reverb", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_reverb_amount", name = "LFO1 > Reverb", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoReverbAmt, v) end}
-  params:add{type = "control", id = "lfo_drive_amount", name = "LFO > Drive", controlspec = specs.LFO_AMT,
+  params:add{type = "control", id = "lfo_drive_amount", name = "LFO1 > Drive", controlspec = specs.LFO_AMT,
     formatter = function(p) return util.round(p:get() * 100) .. "%" end,
     action = function(v) engine_call(engine.lfoDriveAmt, v) end}
+
+  params:add_separator("lfo2")
+  params:add{type = "control", id = "lfo2_rate", name = "LFO2 Rate", controlspec = specs.LFO_RATE, formatter = Formatters.format_freq,
+    action = function(v) engine_call(engine.lfo2Rate, v) end}
+  params:add{type = "option", id = "lfo2_shape", name = "LFO2 Waveform", options = options.LFO_SHAPE, default = 1,
+    action = function(v) engine_call(engine.lfo2Shape, v - 1) end}
+  params:add{type = "control", id = "lfo2_master", name = "LFO2 Master", controlspec = specs.LFO_MASTER, default = 1,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2Master, v) end}
+  params:add{type = "control", id = "lfo2_osc_amount", name = "LFO2 > Osc", controlspec = specs.LFO_AMT,
+    action = function(v) engine_call(engine.lfo2OscAmt, v) end}
+  params:add{type = "control", id = "lfo2_filter_amount", name = "LFO2 > Filter", controlspec = specs.LFO_AMT,
+    action = function(v) engine_call(engine.lfo2FilterAmt, v) end}
+  params:add{type = "control", id = "lfo2_filter_env_attack_amount", name = "LFO2 > FEnv Attack", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2FilterEnvAtkAmt, v) end}
+  params:add{type = "control", id = "lfo2_filter_env_decay_amount", name = "LFO2 > FEnv Decay", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2FilterEnvDecAmt, v) end}
+  params:add{type = "control", id = "lfo2_filter_env_sustain_amount", name = "LFO2 > FEnv Sustain", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2FilterEnvSusAmt, v) end}
+  params:add{type = "control", id = "lfo2_filter_env_release_amount", name = "LFO2 > FEnv Release", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2FilterEnvRelAmt, v) end}
+  params:add{type = "control", id = "lfo2_amp_amount", name = "LFO2 > Amp", controlspec = specs.LFO_AMT,
+    action = function(v) engine_call(engine.lfo2AmpAmt, v) end}
+  params:add{type = "control", id = "lfo2_pw_amount", name = "LFO2 > PW", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2PwAmt, v) end}
+  params:add{type = "control", id = "lfo2_detune1_amount", name = "LFO2 > Detune 1", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2Det1Amt, v) end}
+  params:add{type = "control", id = "lfo2_detune2_amount", name = "LFO2 > Detune 2", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2Det2Amt, v) end}
+  params:add{type = "control", id = "lfo2_noise_amount", name = "LFO2 > Noise", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2NoiseAmt, v) end}
+  params:add{type = "control", id = "lfo2_fm_amount", name = "LFO2 > FM", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2FmAmt, v) end}
+  params:add{type = "control", id = "lfo2_glide_amount", name = "LFO2 > Glide", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2GlideAmt, v) end}
+  params:add{type = "control", id = "lfo2_delay_amount", name = "LFO2 > Delay", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2DelayAmt, v) end}
+  params:add{type = "control", id = "lfo2_reverb_amount", name = "LFO2 > Reverb", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2ReverbAmt, v) end}
+  params:add{type = "control", id = "lfo2_drive_amount", name = "LFO2 > Drive", controlspec = specs.LFO_AMT,
+    formatter = function(p) return util.round(p:get() * 100) .. "%" end,
+    action = function(v) engine_call(engine.lfo2DriveAmt, v) end}
 
   params:add_separator("delay")
   params:add{type = "option", id = "delay_sync", name = "Delay Sync", options = options.DELAY_SYNC, default = 2}
@@ -335,6 +424,7 @@ function Ash.push_engine_state()
   engine_call(engine.filterDec, params:get("filter_decay"))
   engine_call(engine.filterSus, params:get("filter_sustain"))
   engine_call(engine.filterRel, params:get("filter_release"))
+  engine_call(engine.filterEnvLinkAmp, params:get("filter_env_link_amp") == 2 and 1 or 0)
   engine_call(engine.ampAtk, params:get("amp_attack"))
   engine_call(engine.ampDec, params:get("amp_decay"))
   engine_call(engine.ampSus, params:get("amp_sustain"))
@@ -345,6 +435,10 @@ function Ash.push_engine_state()
   engine_call(engine.lfoMaster, params:get("lfo_master"))
   engine_call(engine.lfoOscAmt, params:get("lfo_osc_amount"))
   engine_call(engine.lfoFilterAmt, params:get("lfo_filter_amount"))
+  engine_call(engine.lfoFilterEnvAtkAmt, params:get("lfo_filter_env_attack_amount"))
+  engine_call(engine.lfoFilterEnvDecAmt, params:get("lfo_filter_env_decay_amount"))
+  engine_call(engine.lfoFilterEnvSusAmt, params:get("lfo_filter_env_sustain_amount"))
+  engine_call(engine.lfoFilterEnvRelAmt, params:get("lfo_filter_env_release_amount"))
   engine_call(engine.lfoAmpAmt, params:get("lfo_amp_amount"))
   engine_call(engine.lfoPwAmt, params:get("lfo_pw_amount"))
   engine_call(engine.lfoDet1Amt, params:get("lfo_detune1_amount"))
@@ -355,6 +449,26 @@ function Ash.push_engine_state()
   engine_call(engine.lfoDelayAmt, params:get("lfo_delay_amount"))
   engine_call(engine.lfoReverbAmt, params:get("lfo_reverb_amount"))
   engine_call(engine.lfoDriveAmt, params:get("lfo_drive_amount"))
+
+  engine_call(engine.lfo2Rate, params:get("lfo2_rate"))
+  engine_call(engine.lfo2Shape, params:get("lfo2_shape") - 1)
+  engine_call(engine.lfo2Master, params:get("lfo2_master"))
+  engine_call(engine.lfo2OscAmt, params:get("lfo2_osc_amount"))
+  engine_call(engine.lfo2FilterAmt, params:get("lfo2_filter_amount"))
+  engine_call(engine.lfo2FilterEnvAtkAmt, params:get("lfo2_filter_env_attack_amount"))
+  engine_call(engine.lfo2FilterEnvDecAmt, params:get("lfo2_filter_env_decay_amount"))
+  engine_call(engine.lfo2FilterEnvSusAmt, params:get("lfo2_filter_env_sustain_amount"))
+  engine_call(engine.lfo2FilterEnvRelAmt, params:get("lfo2_filter_env_release_amount"))
+  engine_call(engine.lfo2AmpAmt, params:get("lfo2_amp_amount"))
+  engine_call(engine.lfo2PwAmt, params:get("lfo2_pw_amount"))
+  engine_call(engine.lfo2Det1Amt, params:get("lfo2_detune1_amount"))
+  engine_call(engine.lfo2Det2Amt, params:get("lfo2_detune2_amount"))
+  engine_call(engine.lfo2NoiseAmt, params:get("lfo2_noise_amount"))
+  engine_call(engine.lfo2FmAmt, params:get("lfo2_fm_amount"))
+  engine_call(engine.lfo2GlideAmt, params:get("lfo2_glide_amount"))
+  engine_call(engine.lfo2DelayAmt, params:get("lfo2_delay_amount"))
+  engine_call(engine.lfo2ReverbAmt, params:get("lfo2_reverb_amount"))
+  engine_call(engine.lfo2DriveAmt, params:get("lfo2_drive_amount"))
   engine_call(engine.delayFeedback, params:get("delay_feedback"))
   engine_call(engine.delayMix, params:get("delay_mix"))
   engine_call(engine.delayFilter, params:get("delay_filter"))
@@ -479,6 +593,10 @@ function Ash.randomize()
   params:set("lfo_master", util.linlin(0, 1, 0.5, 1, math.random()))
   maybe_param("lfo_osc_amount", 0.75, function() return math.pow(math.random(), 2) end)
   maybe_param("lfo_filter_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo_filter_env_attack_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo_filter_env_decay_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo_filter_env_sustain_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo_filter_env_release_amount", LFO_THRESH, function() return math.random() end)
   maybe_param("lfo_amp_amount", LFO_THRESH, function() return math.random() end)
   maybe_param("lfo_pw_amount", LFO_THRESH, function() return math.random() end)
   maybe_param("lfo_detune1_amount", LFO_THRESH, function() return math.random() end)
@@ -489,6 +607,26 @@ function Ash.randomize()
   maybe_param("lfo_delay_amount", LFO_THRESH, function() return math.random() end)
   maybe_param("lfo_reverb_amount", LFO_THRESH, function() return math.random() end)
   maybe_param("lfo_drive_amount", LFO_THRESH, function() return math.random() end)
+
+  params:set("lfo2_shape", math.random(5))
+  params:set("lfo2_rate", rand_in_spec(specs.LFO_RATE))
+  params:set("lfo2_master", util.linlin(0, 1, 0.5, 1, math.random()))
+  maybe_param("lfo2_osc_amount", 0.75, function() return math.pow(math.random(), 2) end)
+  maybe_param("lfo2_filter_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_filter_env_attack_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_filter_env_decay_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_filter_env_sustain_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_filter_env_release_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_amp_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_pw_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_detune1_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_detune2_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_noise_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_fm_amount", 0.75, function() return math.random() end)
+  maybe_param("lfo2_glide_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_delay_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_reverb_amount", LFO_THRESH, function() return math.random() end)
+  maybe_param("lfo2_drive_amount", LFO_THRESH, function() return math.random() end)
 
   if math.random() > 0.5 then
     params:set("delay_mix", math.random() * 0.55)
