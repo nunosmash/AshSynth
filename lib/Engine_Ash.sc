@@ -189,7 +189,7 @@ Engine_Ash : CroneEngine {
 				cutRatio = (fBase / i_cFreq).pow(lpTracking.clip(0, 2));
 
 				lpFreq = Lag.kr(lpCutoff.clip(40, 18000), 0.02) * cutRatio;
-				lpFreq = lpFreq * (2 ** (filterEnv * lpEnvAmount * 3));
+				lpFreq = lpFreq * (2 ** (filterEnv * lpEnvAmount * 5));
 				lpFreq = lpFreq * (2 ** (((lfo * lfoFilterAmt) + (lfo2 * lfo2FilterAmt)) * 2));
 				lpFreq = lpFreq.clip(40, 18000);
 
