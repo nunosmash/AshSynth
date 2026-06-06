@@ -105,7 +105,7 @@ Ash.FACTORY_PRESET = {
   osc1_pw = 0.5, osc2_pw = 0.5,
   osc1_pitch = 0, osc2_pitch = 0,
   osc1_octave = 0, osc2_octave = 0,
-  noise_level = 0, fm_amount = 0, glide = 0, glide_mode = 1,
+  noise_level = 0, fm_amount = 0, glide = 0, glide_mode = 2,
   lp_cutoff = 800, lp_resonance = 0.15, lp_env_amount = 0.45, lp_tracking = 1,
   filter_attack = 0.01, filter_decay = 0.25, filter_sustain = 0.5, filter_release = 0.4,
   filter_env_link_amp = 1,
@@ -228,7 +228,7 @@ function Ash.add_params()
     action = function(v) engine_call(engine.fmAmount, v) end}
   params:add{type = "control", id = "glide", name = "Glide", controlspec = specs.GLIDE, formatter = Formatters.format_secs,
     action = function(v) engine_call(engine.glide, v) end}
-  params:add{type = "option", id = "glide_mode", name = "Glide Mode", options = options.GLIDE_MODE, default = 1}
+  params:add{type = "option", id = "glide_mode", name = "Glide Mode", options = options.GLIDE_MODE, default = 2}
 
   params:add_separator("filter")
   params:add{type = "control", id = "lp_cutoff", name = "LP Cutoff", controlspec = specs.LP_CUTOFF, formatter = Formatters.format_freq,
